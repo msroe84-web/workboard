@@ -309,6 +309,7 @@ let daily=[], upcoming=[], confirms=[], memoTxt='';
 let sel={daily:null, upcoming:null, confirm:null};
 let calY=NOW.getFullYear(), calM=NOW.getMonth();
 let datesIdx=new Set(); // 데이터 있는 날짜들
+let calNotes={};
 
 // 현재 보고 있는 날짜 (기본: 오늘)
 let viewY=NOW.getFullYear(), viewM=NOW.getMonth(), viewD=NOW.getDate();
@@ -537,9 +538,22 @@ async function moveItem(fromType, idx, toType){
 }
 
 async function init(){
+  // 로컬 먼저 (빠름)
   const idx=await get('wb-idx');
   if(idx){try{datesIdx=new Set(JSON.parse(idx));}catch{}}
   await loadDay(NOW.getFullYear(),NOW.getMonth(),NOW.getDate());
+  // Notion에서 병합 (백그라운드)
+  const nd = await notionLoad();
+  if(nd && Object.keys(nd).length){
+    if(nd.idx) nd.idx.forEach(k=>datesIdx.add(k));
+    if(nd.days){
+      for(const [k,v] of Object.entries(nd.days)){
+        await set('wb-day-'+k, JSON.stringify(v));
+      }
+    }
+    await set('wb-idx',JSON.stringify([...datesIdx]));
+    await loadDay(viewY,viewM,viewD);
+  }
 }
 init();
 
@@ -596,7 +610,7 @@ async function notionSave(){
       const v=await get('wb-day-'+k);
       if(v) days[k]=JSON.parse(v);
     }
-    const jsonStr = JSON.stringify({idx:[...datesIdx], calNotes, days});
+    const jsonStr = JSON.stringify({idx:[...datesIdx], days});
 
     // 1900자씩 청크 분할
     const chunks=[];
