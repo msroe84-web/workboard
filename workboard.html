@@ -563,12 +563,15 @@ function syncStatus(s, txt){
 }
 
 async function nReq(method, path, body){
-  const res = await fetch('https://api.notion.com/v1'+path, {
+  const target = 'https://api.notion.com/v1'+path;
+  const proxy  = 'https://corsproxy.io/?'+encodeURIComponent(target);
+  const res = await fetch(proxy, {
     method,
     headers:{
       'Authorization':'Bearer '+NOTION_KEY,
       'Notion-Version':NOTION_VER,
-      'Content-Type':'application/json'
+      'Content-Type':'application/json',
+      'x-requested-with':'XMLHttpRequest'
     },
     body: body ? JSON.stringify(body) : undefined
   });
