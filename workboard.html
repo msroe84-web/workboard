@@ -468,7 +468,7 @@ async function getDayData(k){
         });
         dayCache[k]=d;return d;
       }
-      const d={daily:p.daily||[],confirm:p.confirm||[],memo:p.memo||''};
+      const d={daily:p.daily||[],confirm:p.confirm||[],memo:p.memo||'',memoNote:p.memoNote||''};
       d.daily.forEach(t=>{if(!t.id)t.id=uid();});
       d.confirm.forEach(t=>{if(!t.id)t.id=uid();});
       dayCache[k]=d;return d;
@@ -800,7 +800,7 @@ function openMemoPopup(k){
     badge.textContent='MEMO';badge.className='pop-type-badge memo';
     document.getElementById('pop-title').textContent=koDate(y,m,d);
     document.getElementById('pop-text').value=data.memo||'';
-    document.getElementById('pop-notes').value='';
+    document.getElementById('pop-notes').value=data.memoNote||'';
     document.getElementById('pop-date-txt').textContent=koDate(y,m,d);
     document.getElementById('pop-done-btn').style.display='none';
     document.getElementById('overlay').classList.add('open');
@@ -816,6 +816,7 @@ async function popSave(){
   const data=await getDayData(popKey);
   if(popType==='memo'){
     data.memo=document.getElementById('pop-text').value;
+    data.memoNote=document.getElementById('pop-notes').value;
   } else {
     const arr=popType==='task'?data.daily:data.confirm;
     if(arr[popIdx]){
