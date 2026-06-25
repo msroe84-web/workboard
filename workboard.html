@@ -480,8 +480,9 @@ async function renderWeek(){
     const hdrEl=document.createElement('div');
     hdrEl.className='dow-cell';
     hdrEl.style.cssText='padding:8px 4px 7px;cursor:pointer;';
-    if(k===selKey&&!tod)hdrEl.style.background='rgba(248,89,52,.06)';
-    if(tod)hdrEl.style.background='rgba(248,89,52,.05)';
+    if(k===selKey&&!tod)hdrEl.style.background='rgba(248,89,52,.13)';
+    if(tod&&k!==selKey)hdrEl.style.background='rgba(248,89,52,.03)';
+    if(tod&&k===selKey)hdrEl.style.background='rgba(248,89,52,.13)';
     hdrEl.innerHTML='<div'+dowCls+' style="font-size:9px;font-weight:700;letter-spacing:1px;margin-bottom:5px;">'+dowEn+'</div>'
       +'<div style="text-align:center;font-size:19px;font-weight:800;color:'+(tod?'#fff':'#444')+';"><span'+numStyle+'>'+d+'</span></div>';
     hdrEl.onclick=()=>selectDay(k);
