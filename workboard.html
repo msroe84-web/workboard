@@ -226,6 +226,29 @@ body{display:flex;}
 .pop-done-btn:hover{background:#262626;color:#fff;}
 .pop-save{flex:1;padding:9px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--f);transition:opacity .12s;letter-spacing:.3px;}
 .pop-save:hover{opacity:.85;}
+
+/* Report popup wide */
+.popup.wide{width:560px;max-width:96vw;}
+.popup.wide .pop-notes{min-height:340px;}
+
+/* Report sidebar panel */
+.rp-panel{border-top:1px solid var(--bd);padding-top:12px;display:flex;flex-direction:column;gap:7px;min-height:0;flex:1;}
+.rp-panel-hd{display:flex;align-items:center;justify-content:space-between;}
+.rp-panel-ttl{font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--cb);}
+.rp-add-btn{width:18px;height:18px;background:none;border:1px solid var(--bd);border-radius:4px;color:#333;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .12s;font-family:var(--f);}
+.rp-add-btn:hover{border-color:#666;color:#aaa;}
+.rp-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0;}
+.rp-list::-webkit-scrollbar{width:2px;}
+.rp-list::-webkit-scrollbar-thumb{background:#1e1e1e;}
+.rp-item{padding:7px 9px;border-radius:7px;background:linear-gradient(160deg,var(--c1),var(--c2));border-left:2px solid var(--cb);color:var(--cc);font-size:11.5px;font-weight:600;cursor:pointer;transition:filter .12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rp-item:hover{filter:brightness(1.25);}
+.rp-empty{font-size:10px;color:#222;text-align:center;padding:8px 0;}
+.rp-inp-row{display:flex;gap:5px;}
+.rp-inp{flex:1;background:#1a1a1a;border:1px solid var(--bd);border-radius:6px;padding:5px 8px;font-size:11px;color:#ddd;font-family:var(--f);outline:none;transition:border-color .15s;}
+.rp-inp:focus{border-color:var(--cb);}
+.rp-inp::placeholder{color:#2a2a2a;}
+.rp-sub{width:24px;height:24px;background:var(--c1);border:1px solid var(--cb);border-radius:6px;color:var(--cc);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--f);transition:filter .12s;}
+.rp-sub:hover{filter:brightness(1.3);}
 </style>
 </head>
 <body>
@@ -254,7 +277,7 @@ body{display:flex;}
     <div class="cat-item" onclick="toggleCat('c')">
       <div class="cat-chk on-c" id="cc-c"></div>
       <div class="cat-dot" style="background:var(--cb)"></div>
-      <div class="cat-lbl">Confirmed</div>
+      <div class="cat-lbl">Report</div>
       <div class="cat-cnt" id="cn-c"></div>
     </div>
     <div class="cat-item" onclick="toggleCat('m')">
@@ -262,6 +285,17 @@ body{display:flex;}
       <div class="cat-dot" style="background:var(--mb)"></div>
       <div class="cat-lbl">Memo</div>
       <div class="cat-cnt" id="cn-m"></div>
+    </div>
+  </div>
+  <div class="rp-panel">
+    <div class="rp-panel-hd">
+      <div class="rp-panel-ttl">REPORT</div>
+      <button class="rp-add-btn" onclick="rpFocusAdd()" title="추가">+</button>
+    </div>
+    <div class="rp-list" id="rp-list"></div>
+    <div class="rp-inp-row" id="rp-inp-row" style="display:none;">
+      <input class="rp-inp" id="rp-inp" placeholder="어젠다 추가..." onkeydown="if(event.key==='Enter')rpSubmit();if(event.key==='Escape')rpHideAdd();">
+      <button class="rp-sub" onclick="rpSubmit()">+</button>
     </div>
   </div>
   <div class="sb-bot">
@@ -420,7 +454,7 @@ function rerender(){
   if(curView==='week')renderWeek();
   else if(curView==='day')renderDayView();
   else renderMonthView();
-  renderMC();
+  renderMC();renderRpPanel();
 }
 
 // ── WEEK ──
@@ -459,7 +493,7 @@ async function renderWeek(){
         tCnt++;
         const el=document.createElement('div');
         el.className='evt task'+(t.done?' done':'');
-        el.textContent=(t.done?'✓ ':'')+t.text;
+        el.textContent=(t.done?'✓ ':'✦ ')+t.text;
         el.onclick=(e)=>{e.stopPropagation();openPopup(k,'t',idx);};
         col.appendChild(el);
       });
@@ -467,7 +501,7 @@ async function renderWeek(){
         cCnt++;
         const el=document.createElement('div');
         el.className='evt conf';
-        el.textContent=t.text;
+        el.textContent='⊡ '+t.text;
         el.onclick=(e)=>{e.stopPropagation();openPopup(k,'c',idx);};
         col.appendChild(el);
       });
@@ -686,7 +720,7 @@ function toggleCat(type){
 }
 
 // ── INPUT BAR ──
-const ibTypes={t:{label:'Daily Tasks'},c:{label:'Confirmed'},m:{label:'Memo'}};
+const ibTypes={t:{label:'Daily Tasks'},c:{label:'Report'},m:{label:'Memo'}};
 function ibCycle(){
   const order=['t','c','m'];
   ibType=order[(order.indexOf(ibType)+1)%order.length];
@@ -762,6 +796,8 @@ async function openPopup(k,type,idx){
   const db=document.getElementById('pop-done-btn');
   if(type==='t'){db.style.display='';db.textContent=item.done?'Mark Undone':'Mark Done';}
   else db.style.display='none';
+  const pw=document.querySelector('.popup');
+  pw.classList.toggle('wide',type==='c');
   document.getElementById('overlay').classList.add('open');
   setTimeout(()=>document.getElementById('pop-ti').focus(),50);
 }
@@ -776,6 +812,8 @@ async function openMemoPopup(k){
   document.getElementById('pop-notes').value=data.memoNote||'';
   document.getElementById('pop-datetxt').textContent=koDate(y,m,d);
   document.getElementById('pop-done-btn').style.display='none';
+  const pw=document.querySelector('.popup');
+  pw.classList.remove('wide');
   document.getElementById('overlay').classList.add('open');
   setTimeout(()=>document.getElementById('pop-ti').focus(),50);
 }
@@ -830,6 +868,32 @@ async function popMvDate(delta){
   document.getElementById('pop-datetxt').textContent=koDate(y,m,d);
   document.getElementById('pop-ht').textContent=koDate(y,m,d);
   rerender();
+}
+
+// ── REPORT PANEL ──
+async function renderRpPanel(){
+  const data=await getDayData(selKey);
+  const el=document.getElementById('rp-list');if(!el)return;
+  const items=data.confirm||[];
+  if(!items.length){el.innerHTML='<div class="rp-empty">항목 없음</div>';return;}
+  const k=selKey;
+  el.innerHTML=items.map((t,i)=>'<div class="rp-item" onclick="openPopup(\''+k+'\',\'c\','+i+')" title="'+esc(t.text)+'">'+esc(t.text)+'</div>').join('');
+}
+function rpFocusAdd(){
+  const row=document.getElementById('rp-inp-row');
+  row.style.display='flex';
+  setTimeout(()=>document.getElementById('rp-inp').focus(),50);
+}
+function rpHideAdd(){
+  document.getElementById('rp-inp-row').style.display='none';
+  document.getElementById('rp-inp').value='';
+}
+async function rpSubmit(){
+  const ip=document.getElementById('rp-inp');
+  const v=ip.value.trim();if(!v)return;
+  const data=await getDayData(selKey);
+  data.confirm.push({id:uid(),text:v,done:false,note:''});
+  rpHideAdd();await saveKey(selKey);rerender();
 }
 
 // ── NOTION ──
