@@ -98,7 +98,9 @@ body{display:flex;}
 .day-col:hover{background:rgba(255,255,255,.015);}
 
 /* ══ EVENT CHIPS ══ */
-.evt{padding:8px 10px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;border-left:2px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .15s;flex-shrink:0;}
+.evt{padding:8px 10px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;border-left:2px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .15s;flex-shrink:0;display:flex;align-items:center;gap:7px;}
+.evt-icon{font-size:10px;opacity:.7;flex-shrink:0;}
+.evt-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
 .evt:hover{filter:brightness(1.2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.5);}
 .evt.task{background:linear-gradient(160deg,var(--t1),var(--t2));border-left-color:var(--tb);color:var(--tc);}
 .evt.conf{background:linear-gradient(160deg,var(--c1),var(--c2));border-left-color:var(--cb);color:var(--cc);}
@@ -493,7 +495,7 @@ async function renderWeek(){
         tCnt++;
         const el=document.createElement('div');
         el.className='evt task'+(t.done?' done':'');
-        el.textContent=(t.done?'✓ ':'✦ ')+t.text;
+        el.innerHTML='<span class="evt-icon">'+(t.done?'✓':'✦')+'</span><span class="evt-text">'+esc(t.text)+'</span>';
         el.onclick=(e)=>{e.stopPropagation();openPopup(k,'t',idx);};
         col.appendChild(el);
       });
@@ -501,7 +503,7 @@ async function renderWeek(){
         cCnt++;
         const el=document.createElement('div');
         el.className='evt conf';
-        el.textContent='⊡ '+t.text;
+        el.innerHTML='<span class="evt-icon">⊡</span><span class="evt-text">'+esc(t.text)+'</span>';
         el.onclick=(e)=>{e.stopPropagation();openPopup(k,'c',idx);};
         col.appendChild(el);
       });
@@ -509,7 +511,7 @@ async function renderWeek(){
         mCnt++;
         const el=document.createElement('div');
         el.className='evt memo';
-        el.textContent='✎ '+data.memo;
+        el.innerHTML='<span class="evt-icon">✎</span><span class="evt-text">'+esc(data.memo)+'</span>';
         el.onclick=(e)=>{e.stopPropagation();openMemoPopup(k);};
         col.appendChild(el);
       }
