@@ -38,12 +38,12 @@ body{display:flex;}
 .mc-btn{background:none;border:none;color:#333;font-size:12px;cursor:pointer;padding:2px 5px;border-radius:4px;}
 .mc-btn:hover{color:#fff;}
 .mc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
-.mc-dw{text-align:center;font-size:8px;color:#222;padding:2px 0 3px;font-weight:700;}
+.mc-dw{text-align:center;font-size:8px;color:#444;padding:2px 0 3px;font-weight:700;}
 .mc-dw:first-child{color:rgba(255,80,80,.4);}
-.mc-day{text-align:center;font-size:10px;color:#222;padding:3px 0;border-radius:4px;cursor:pointer;position:relative;transition:all .1s;}
-.mc-day:hover{background:#1e1e1e;color:#aaa;}
+.mc-day{text-align:center;font-size:10px;color:#666;padding:3px 0;border-radius:4px;cursor:pointer;position:relative;transition:all .1s;}
+.mc-day:hover{background:#222;color:#ddd;}
 .mc-day.tod{background:var(--acc);color:#fff;font-weight:800;}
-.mc-day.ot{color:#161616;pointer-events:none;}
+.mc-day.ot{color:#2a2a2a;pointer-events:none;}
 .mc-day.sel:not(.tod){outline:1px solid var(--acc);}
 .mc-day.hn::after{content:'';width:3px;height:3px;background:var(--acc);border-radius:50%;position:absolute;bottom:0;left:50%;transform:translateX(-50%);}
 
@@ -68,7 +68,7 @@ body{display:flex;}
 .sync-dot.loading{background:#6a6a90;animation:pulse 1s infinite;}
 .sync-txt{font-size:10px;color:#2a2a2a;letter-spacing:.3px;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.sb-clk{padding:3px 7px;font-size:11px;color:#222;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
+.sb-clk{padding:3px 7px;font-size:11px;color:#3a3a3a;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
 
 /* ══ MAIN ══ */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
@@ -242,7 +242,10 @@ body{display:flex;}
 .rp-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0;}
 .rp-list::-webkit-scrollbar{width:2px;}
 .rp-list::-webkit-scrollbar-thumb{background:#1e1e1e;}
-.rp-item{padding:7px 9px;border-radius:7px;background:linear-gradient(160deg,var(--c1),var(--c2));border-left:2px solid var(--cb);color:var(--cc);font-size:11.5px;font-weight:600;cursor:pointer;transition:filter .12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rp-item{display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:7px;background:linear-gradient(160deg,var(--c1),var(--c2));border-left:2px solid var(--cb);color:var(--cc);font-size:11.5px;font-weight:600;cursor:pointer;transition:filter .12s;}
+.rp-item-tx{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rp-done-btn{width:18px;height:18px;background:rgba(138,122,101,.15);border:1px solid var(--cb);border-radius:4px;color:var(--cb);font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s;font-family:var(--f);}
+.rp-done-btn:hover{background:var(--cb);color:#000;}
 .rp-item:hover{filter:brightness(1.25);}
 .rp-empty{font-size:10px;color:#222;text-align:center;padding:8px 0;}
 .rp-inp-row{display:flex;gap:5px;}
@@ -503,7 +506,7 @@ async function renderWeek(){
       if(catShow.c)data.confirm.forEach((t,idx)=>{
         cCnt++;
         const el=document.createElement('div');
-        el.className='evt conf';
+        el.className='evt conf'+(t.done?' done':'');
         el.innerHTML='<span class="evt-icon">⊡</span><span class="evt-text">'+esc(t.text)+'</span>';
         el.onclick=(e)=>{e.stopPropagation();openPopup(k,'c',idx);};
         col.appendChild(el);
@@ -797,8 +800,8 @@ async function openPopup(k,type,idx){
   document.getElementById('pop-notes').value=item.note||'';
   document.getElementById('pop-datetxt').textContent=koDate(y,m,d);
   const db=document.getElementById('pop-done-btn');
-  if(type==='t'){db.style.display='';db.textContent=item.done?'Mark Undone':'Mark Done';}
-  else db.style.display='none';
+  db.style.display='';
+  db.textContent=item.done?'Mark Undone':'Mark Done';
   const pw=document.querySelector('.popup');
   pw.classList.toggle('wide',type==='c');
   document.getElementById('overlay').classList.add('open');
@@ -848,10 +851,11 @@ async function popDel(){
   await saveKey(popKey);closePopup();rerender();
 }
 async function popToggleDone(){
-  if(!popKey||popType!=='t')return;
+  if(!popKey||(popType!=='t'&&popType!=='c'))return;
   const data=await getDayData(popKey);
-  if(data.daily[popIdx])data.daily[popIdx].done=!data.daily[popIdx].done;
-  document.getElementById('pop-done-btn').textContent=data.daily[popIdx].done?'Mark Undone':'Mark Done';
+  const arr=popType==='t'?data.daily:data.confirm;
+  if(arr[popIdx])arr[popIdx].done=!arr[popIdx].done;
+  document.getElementById('pop-done-btn').textContent=arr[popIdx].done?'Mark Undone':'Mark Done';
   await saveKey(popKey);rerender();
 }
 async function popMvDate(delta){
@@ -875,12 +879,20 @@ async function popMvDate(delta){
 
 // ── REPORT PANEL ──
 async function renderRpPanel(){
-  const data=await getDayData(selKey);
   const el=document.getElementById('rp-list');if(!el)return;
-  const items=data.confirm||[];
-  if(!items.length){el.innerHTML='<div class="rp-empty">항목 없음</div>';return;}
-  const k=selKey;
-  el.innerHTML=items.map((t,i)=>'<div class="rp-item" onclick="openPopup(\''+k+'\',\'c\','+i+')" title="'+esc(t.text)+'">'+esc(t.text)+'</div>').join('');
+  const allItems=[];
+  const keys=new Set([...datesIdx,selKey,dKey(NOW.getFullYear(),NOW.getMonth(),NOW.getDate())]);
+  for(const k of keys){
+    const data=await getDayData(k);
+    (data.confirm||[]).forEach((t,i)=>{if(!t.done)allItems.push({k,t,i});});
+  }
+  if(!allItems.length){el.innerHTML='<div class="rp-empty">항목 없음</div>';return;}
+  el.innerHTML=allItems.map(({k,t,i})=>
+    '<div class="rp-item" onclick="openPopup(\''+k+'\',\'c\','+i+')" title="'+esc(t.text)+'">'
+    +'<span class="rp-item-tx">'+esc(t.text)+'</span>'
+    +'<button class="rp-done-btn" onclick="event.stopPropagation();rpComplete(\''+k+'\','+i+')">✓</button>'
+    +'</div>'
+  ).join('');
 }
 function rpFocusAdd(){
   const row=document.getElementById('rp-inp-row');
@@ -890,6 +902,10 @@ function rpFocusAdd(){
 function rpHideAdd(){
   document.getElementById('rp-inp-row').style.display='none';
   document.getElementById('rp-inp').value='';
+}
+async function rpComplete(k,i){
+  const data=await getDayData(k);
+  if(data.confirm[i]){data.confirm[i].done=true;await saveKey(k);rerender();}
 }
 async function rpSubmit(){
   const ip=document.getElementById('rp-inp');
